@@ -1,0 +1,23 @@
+{
+  "name": "tscachedtable",
+  "version": "1.0.0",
+  "description": "A virtual table manager written in TypeScript",
+  "author": {
+    "name": "Rodolfo M. Raya",
+    "url": "https://maxprograms.com",
+    "email": "rmraya@maxprograms.com"
+  },
+  "license": "EPL-1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rmraya/TsCachedTable"
+  },
+  "scripts": {
+    "build": "tsc"
+  }
+}
