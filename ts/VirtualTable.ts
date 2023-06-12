@@ -42,21 +42,7 @@ export class VirtualTable {
 
     startRow: number = 0;
 
-    constructor(model: TableModel, parent: HTMLElement, options?: any) {
-        this.model = model;
-
-        if (options) {
-            if (!options.headerBackground) {
-                options.headerBackground = this.tableOptions.headerBackground;
-            }
-            if (!options.bufferSize) {
-                options.bufferSize = this.tableOptions.bufferSize;
-            }
-            if (!options.renderCache) {
-                options.renderCache = this.tableOptions.renderCache;
-            }
-            this.tableOptions = options;
-        }
+    constructor(parent: HTMLElement, model: TableModel, options?: any) {
         parent.style.overflow = 'auto';
 
         this.tableElement = document.createElement('table');
@@ -76,7 +62,6 @@ export class VirtualTable {
         this.headerRow.style.backgroundColor = 'inherit !important';
         this.headerRow.style.verticalAlign = 'middle';
         this.thead.appendChild(this.headerRow);
-        this.populateHeaderRow();
 
         this.tbody = document.createElement('tbody');
         this.tbody.classList.add('virtualTableBody');
@@ -87,34 +72,7 @@ export class VirtualTable {
         this.tbody.style.overflowY = 'auto';
         this.tableElement.appendChild(this.tbody);
 
-        this.topSpacer = document.createElement('tr');
-        this.topSpacer.style.height = '0px';
-        this.topSpacer.style.width = '100%';
-        this.tbody.appendChild(this.topSpacer);
-
-        this.modelCount = this.model.getRowCount();
-        for (let i: number = 0; i < this.tableOptions.renderCache && i < this.modelCount; i++) {
-            let row: HTMLTableRowElement = this.createRow(i);
-            this.cachedRows.push(row);
-            this.tbody.appendChild(row);
-            let rowHeight: number = row.clientHeight;
-            let bottomBorder = parseInt(row.style.borderBottomWidth);
-            if (Number.isNaN(bottomBorder)){
-                bottomBorder = 0;
-            } 
-            let topBorder = parseInt(row.style.borderTopWidth);
-            if(Number.isNaN(topBorder)){
-                topBorder = 0;
-            }
-            this.cachedRowsHeight += rowHeight + bottomBorder + topBorder;
-        }
-        this.averageRowHeight = this.cachedRowsHeight / this.cachedRows.length;
-        
-        this.bottomSpacer = document.createElement('tr');
-        this.bottomSpacer.style.width = '100%';
-        this.tbody.appendChild(this.bottomSpacer);
-
-        this.adjustSpacers();
+        this.setTableModel(model, options);
 
         parent.addEventListener('scroll', () => {
             this.handleScroll();
@@ -130,6 +88,62 @@ export class VirtualTable {
             }
         });
         observer.observe(parent, config);
+    }
+
+    setTableModel(model: TableModel, options?: any): void {
+        this.model = model;
+        if (options) {
+            this.processOptions(options);
+        }
+        this.populateHeaderRow();
+
+        this.tbody.innerHTML = '';
+        this.cachedRows = [];
+        this.cachedRowsHeight = 0;
+
+        this.topSpacer = document.createElement('tr');
+        this.topSpacer.style.height = '0px';
+        this.topSpacer.style.width = '100%';
+        this.tbody.appendChild(this.topSpacer);
+
+        this.modelCount = this.model.getRowCount();
+        for (let i: number = 0; i < this.tableOptions.renderCache && i < this.modelCount; i++) {
+            let row: HTMLTableRowElement = this.createRow(i);
+            this.cachedRows.push(row);
+            this.tbody.appendChild(row);
+            let rowHeight: number = row.clientHeight;
+            let bottomBorder = parseInt(row.style.borderBottomWidth);
+            if (Number.isNaN(bottomBorder)) {
+                bottomBorder = 0;
+            }
+            let topBorder = parseInt(row.style.borderTopWidth);
+            if (Number.isNaN(topBorder)) {
+                topBorder = 0;
+            }
+            this.cachedRowsHeight += rowHeight + bottomBorder + topBorder;
+        }
+        this.averageRowHeight = this.cachedRowsHeight / this.cachedRows.length;
+
+        this.bottomSpacer = document.createElement('tr');
+        this.bottomSpacer.style.width = '100%';
+        this.tbody.appendChild(this.bottomSpacer);
+
+        (this.tableElement.parentElement as HTMLElement).scrollTop = 0;
+        this.adjustSpacers();
+        this.fullReload(0);
+    }
+
+    processOptions(options: any): void {
+        if (!options.headerBackground) {
+            options.headerBackground = this.tableOptions.headerBackground;
+        }
+        if (!options.bufferSize) {
+            options.bufferSize = this.tableOptions.bufferSize;
+        }
+        if (!options.renderCache) {
+            options.renderCache = this.tableOptions.renderCache;
+        }
+        this.tableOptions = options;
     }
 
     fullReload(fromRow: number): void {
@@ -158,11 +172,11 @@ export class VirtualTable {
             let row: HTMLTableRowElement = this.cachedRows[i];
             let rowHeight: number = row.clientHeight;
             let bottomBorder = parseInt(row.style.borderBottomWidth);
-            if (Number.isNaN(bottomBorder)){
+            if (Number.isNaN(bottomBorder)) {
                 bottomBorder = 0;
-            } 
+            }
             let topBorder = parseInt(row.style.borderTopWidth);
-            if(Number.isNaN(topBorder)){
+            if (Number.isNaN(topBorder)) {
                 topBorder = 0;
             }
             this.cachedRowsHeight += rowHeight + bottomBorder + topBorder;
@@ -241,11 +255,11 @@ export class VirtualTable {
             let row: HTMLTableRowElement = this.cachedRows[i];
             let rowHeight: number = row.clientHeight;
             let bottomBorder = parseInt(row.style.borderBottomWidth);
-            if (Number.isNaN(bottomBorder)){
+            if (Number.isNaN(bottomBorder)) {
                 bottomBorder = 0;
-            } 
+            }
             let topBorder = parseInt(row.style.borderTopWidth);
-            if(Number.isNaN(topBorder)){
+            if (Number.isNaN(topBorder)) {
                 topBorder = 0;
             }
             this.cachedRowsHeight += rowHeight + bottomBorder + topBorder;
@@ -289,6 +303,9 @@ export class VirtualTable {
     }
 
     reviewScroll(): void {
+        if (this.modelCount === 0) {
+            return;
+        }
         let scrollPosition: number = (this.tableElement.parentElement as HTMLElement).scrollTop;
 
         let approximate: number = Math.floor(scrollPosition / this.averageRowHeight);
@@ -344,6 +361,7 @@ export class VirtualTable {
     }
 
     populateHeaderRow() {
+        this.headerRow.innerHTML = '';
         let columns: ColumnModel[] = this.model.getColums();
         let columnCount: number = columns.length;
         for (let i: number = 0; i < columnCount; i++) {
